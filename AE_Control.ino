@@ -20,6 +20,10 @@ float frequency = 100;                // Frequency in Hertz
 float dutyCycle;                      // Duty cycle (pulse width) percentage
 float period = 1000000 / frequency;   //1 Second in microseconds divided by the frequency
 
+int actuatorCloseDuty = 0;
+int actuatorOpenDuty = 1023;
+int actuator50Duty = actuatorOpenDuty * 0.5;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -40,11 +44,14 @@ void setup() {
 
 void loop() {
 
-  bool check = buttonPressed();
+ if(buttonPressed())
+ {
+  updateState(true);
+  updateActuatorSignal();
+  updateIndicatorLEDs();
+ }
 
-  updateState(check);
-
- Serial.println(actuatorState);
+  Serial.println(actuatorState);
 
 }
 
@@ -84,8 +91,8 @@ void updateState(bool next){
 void initializeActuator(){
   //Cycles the signal sent to the actuator to allow it to self calibrate and be ready
   
-  digitalWrite(ledPin1, HIGH);
-  digitalWrite(ledPin2, HIGH);
+  digitalWrite(led1Pin, HIGH);
+  digitalWrite(led2Pin, HIGH);
   
   digitalWrite(actuatorPin, LOW);
   delay(250);
@@ -93,10 +100,38 @@ void initializeActuator(){
   digitalWrite(actuatorPin, HIGH);
   delay(1000);
 
-  digitalWrite(acutatorPin, LOW);
+  digitalWrite(actuatorPin, LOW);
   delay(1000);
 
-  digitalWrite(ledPin1, LOW);
-  digitalWrite(ledPin2, LOW);
+  digitalWrite(led1Pin, LOW);
+  digitalWrite(led2Pin, LOW);
 
+}
+
+void updateActuatorSignal(){
+
+  switch(actuatorState){
+    case 1:
+      Timer1.pwm(actuatorPin, actuator50Duty);
+      break;
+    case 2:
+      Timer1.pwm(actuatorPin, actuatorOpenDuty);
+      break;
+    default:
+      Timer1.pwm(actuatorPin, actuatorCloseDuty);
+  }
+}
+
+void updateIndicatorLEDs(){
+
+  if(actuatorState > 0)
+    digitalWrite(led1Pin, HIGH);
+  else
+    digitalWrite(led1Pin, LOW);
+    
+  if(actuatorState > 1)
+    digitalWrite(led2Pin, HIGH);
+   else
+    digitalWrite(led2Pin, LOW);
+  
 }
